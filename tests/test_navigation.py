@@ -38,3 +38,8 @@ class Test(unittest.TestCase):
     def test_slice_on_dict(self):
         element = self.jn.navigate('result', 0, slice(2, 3))
         self.assertEqual(element, None)
+
+    def test_ellipsis_on_list(self):
+        element = self.jn.navigate('result', ...)
+        self.assertIsInstance(element, list)
+        self.assertEqual(element, self.parsed['result'])

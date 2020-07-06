@@ -1,6 +1,4 @@
-
-class JsonNavigatorAll(object):
-    pass
+from collections import deque
 
 
 class JsonNavigator(object):
@@ -16,8 +14,7 @@ class JsonNavigator(object):
         who have a key, value pair that matches tuple's contents
     ellipsis `...` will match all elements of a list, or dict (useful to just go one nesting level deeper)
     """
-    # define constants
-    ALL = JsonNavigatorAll()
+
 
     def __init__(self, grey_mass):
         self.grey_mass = grey_mass
@@ -28,22 +25,29 @@ class JsonNavigator(object):
         :param path: the navigation path
         :return: subset of the parsed json tree
         """
-        subtree = self.grey_mass
-        try:
-            for arg in path:
-                if isinstance(arg, (str, int, slice)):
-                    subtree = subtree[arg]
-                elif arg is ...:
-                    raise NotImplementedError('temporary')
-                # idea: morph the subtree into a special object, that is capable of parallel navigation in its elements
+        subtrees = deque([self.grey_mass])
+
+        for arg in path:
+            for _ in range(len(subtrees)):
+                bough = subtrees.popleft()
+                if arg is ...:
+                    try:
+                        subtrees.extend(bough)
+                    except TypeError:
+                        subtrees.append(bough)
+                elif isinstance(arg, (str, int, slice)):
+                    try:
+                        subtrees.append(bough[arg])
+                    except KeyError:
+                        subtrees.append(None)
+                    except TypeError as e:
+                        if 'unhashable type' in e.args[0]:
+                            subtrees.append(None)
+                        else:
+                            raise
                 else:
                     raise NotImplementedError
-        except KeyError:
-            return None
-        except TypeError as e:
-            if 'unhashable type' not in e.args[0]:
-                raise
-            else:
-                return None
-
-        return subtree
+        if len(subtrees) == 1:
+            return subtrees[0]
+        else:
+            return subtrees

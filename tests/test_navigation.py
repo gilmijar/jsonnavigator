@@ -41,5 +41,9 @@ class Test(unittest.TestCase):
 
     def test_ellipsis_on_list(self):
         element = self.jn.navigate('result', ...)
-        self.assertIsInstance(element, list)
-        self.assertEqual(element, self.parsed['result'])
+        self.assertEqual(list(element), self.parsed['result'])
+
+    def test_ellipsis_on_dict(self):
+        element = self.jn.navigate('result', 0, ...)
+        self.assertEqual(list(element), self.parsed['result'])
+        # this fails because subtrees.extend adds dict keys instead of values need to know what to do whhen somehow
